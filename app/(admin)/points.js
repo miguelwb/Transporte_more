@@ -151,11 +151,11 @@ export default function ManagePoints() {
 
       <View style={styles.form}>
         <Text style={styles.sectionTitle}>{editingId ? 'Editar Ponto' : 'Adicionar Novo Ponto'}</Text>
-        <TextInput placeholder="Nome do ponto" style={styles.input} value={form.nome} onChangeText={(t) => setForm((f) => ({ ...f, nome: t }))} />
-        <TextInput placeholder="Endereço" style={styles.input} value={form.endereco} onChangeText={(t) => setForm((f) => ({ ...f, endereco: t }))} />
+        <TextInput placeholder="Nome do ponto" placeholderTextColor="#666" style={styles.input} value={form.nome} onChangeText={(t) => setForm((f) => ({ ...f, nome: t }))} />
+        <TextInput placeholder="Endereço" placeholderTextColor="#666" style={styles.input} value={form.endereco} onChangeText={(t) => setForm((f) => ({ ...f, endereco: t }))} />
         {/* Busca de endereço para obter coordenadas automaticamente */}
         <View style={styles.row}>
-          <TextInput placeholder="Buscar endereço (ex: Rua, Cidade)" style={[styles.input, styles.flex]}
+          <TextInput placeholder="Buscar endereço (ex: Rua, Cidade)" placeholderTextColor="#666" style={[styles.input, styles.flex]}
             value={searchQuery} onChangeText={setSearchQuery} />
           <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn]} onPress={handleSearch}>
             <Text style={styles.actionText}>Buscar</Text>
@@ -194,12 +194,12 @@ export default function ManagePoints() {
           )}
         </View>
         <View style={styles.row}>
-          <TextInput placeholder="Latitude" keyboardType="numeric" style={[styles.input, styles.half]} value={form.latitude} onChangeText={(t) => setForm((f) => ({ ...f, latitude: t }))} />
-          <TextInput placeholder="Longitude" keyboardType="numeric" style={[styles.input, styles.half]} value={form.longitude} onChangeText={(t) => setForm((f) => ({ ...f, longitude: t }))} />
+          <TextInput placeholder="Latitude" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.latitude} onChangeText={(t) => setForm((f) => ({ ...f, latitude: t }))} />
+          <TextInput placeholder="Longitude" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.longitude} onChangeText={(t) => setForm((f) => ({ ...f, longitude: t }))} />
         </View>
         <View style={styles.row}>
-          <TextInput placeholder="Nº de alunos" keyboardType="numeric" style={[styles.input, styles.half]} value={form.alunosCount} onChangeText={(t) => setForm((f) => ({ ...f, alunosCount: t }))} />
-          <TextInput placeholder="Horário de coleta (ex: 07:30)" style={[styles.input, styles.half]} value={form.horarioColeta} onChangeText={(t) => setForm((f) => ({ ...f, horarioColeta: t }))} />
+          <TextInput placeholder="Nº de alunos" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.alunosCount} onChangeText={(t) => setForm((f) => ({ ...f, alunosCount: t }))} />
+          <TextInput placeholder="Horário de coleta (ex: 07:30)" placeholderTextColor="#666" style={[styles.input, styles.half]} value={form.horarioColeta} onChangeText={(t) => setForm((f) => ({ ...f, horarioColeta: t }))} />
         </View>
         <View style={styles.actionsRow}>
           <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn]} onPress={handleSubmit}>
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#333', marginBottom: 12 },
   form: { backgroundColor: '#fff', borderRadius: 10, padding: 12, elevation: 2 },
   sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#333', marginBottom: 8 },
-  input: { backgroundColor: '#f8f8f8', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8, marginBottom: 8 },
+  input: { backgroundColor: '#ffffff', color: '#111', paddingHorizontal: 10, paddingVertical: 10, borderRadius: 8, marginBottom: 8, fontSize: 14 },
   row: { flexDirection: 'row', gap: 10 },
   half: { flex: 1 },
   flex: { flex: 1 },
