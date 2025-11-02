@@ -5,9 +5,12 @@ import { useFonts } from 'expo-font';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { useUserData } from '../../contexts/UserDataContext';
 
 function CustomDrawerContent(props) {
+    const { instituicao, ponto, profileImage, theme, nome } = useUserData();
+    const isDarkTheme = theme === 'dark';
 
     const handleLogout = async () => {
         await AsyncStorage.removeItem('userRA');
@@ -15,36 +18,37 @@ function CustomDrawerContent(props) {
     };
 
     return (
-        <View style={{ flex: 1 }}>
-            <View style={{ flex: 0.65, justifyContent: 'center', alignItems: 'center', backgroundColor: '#115f8c', marginBottom: 30 }}>
+        <View style={{ flex: 1, backgroundColor: isDarkTheme ? '#121212' : '#ffffff' }}>
+            <View style={{ flex: 0.65, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c', marginBottom: 30 }}>
                 <Image
-                    source={require('../../assets/images/usuario.png')}
-                    style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 10, borderColor: '#093f5d', borderWidth: 3 }}
+                    source={profileImage ? { uri: profileImage } : require('../../assets/images/usuario.png')}
+                    style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 10, borderColor: isDarkTheme ? '#115f8c' : '#093f5d', borderWidth: 3 }}
                 />
-                <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#000000ff' }}>Olá, Usuário</Text>
+                <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDarkTheme ? '#ffffff' : '#000000ff' }}>Olá, {nome || "Usuário"}</Text>
             </View>
             <View style={{ alignItems: 'center', marginBottom: 20 }}>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#115f8c', textAlign: 'center', marginBottom: 20, fontFamily: 'LeagueSpartan-Bold', textTransform: 'uppercase', height: 32 }}>Instituição de Ensino</Text>
-                <Text style={{ fontSize: 16, fontWeight: 'bold', color: '#115f8c', textAlign: 'center', marginBottom: 20, fontFamily: 'LeagueSpartan-Bold' }}>Ponto de Onibus</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: isDarkTheme ? '#4da6ff' : '#115f8c', textAlign: 'center', marginBottom: 5, fontFamily: 'LeagueSpartan-Bold', textTransform: 'uppercase', height: 32 }}>Instituição de Ensino</Text>
+                <Text style={{ fontSize: 14, color: isDarkTheme ? '#e0e0e0' : '#000', textAlign: 'center', marginBottom: 20, fontFamily: 'LeagueSpartan-Medium' }}>{instituicao || "Não selecionada"}</Text>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: isDarkTheme ? '#4da6ff' : '#115f8c', textAlign: 'center', marginBottom: 5, fontFamily: 'LeagueSpartan-Bold' }}>Ponto de Onibus</Text>
+                <Text style={{ fontSize: 14, color: isDarkTheme ? '#e0e0e0' : '#000', textAlign: 'center', marginBottom: 20, fontFamily: 'LeagueSpartan-Medium' }}>{ponto || "Não selecionado"}</Text>
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => router.push('/edit')}
                     style={{
                         alignItems: 'center',
                         justifyContent: 'center',
-                        backgroundColor: '#d9e6ee',
+                        backgroundColor: isDarkTheme ? '#1e3a5f' : '#d9e6ee',
                         borderRadius: 50,
                         height: 45,
                         width: 120,
                         marginBottom: 30,
-
                     }}
                 >
-                    <Text style={{ margin: 16, fontSize: 18, color: '#115f8c', fontFamily: 'LeagueSpartan-Bold', fontWeight: 'bold' }}>Editar</Text>
+                    <Text style={{ margin: 16, fontSize: 18, color: isDarkTheme ? '#ffffff' : '#115f8c', fontFamily: 'LeagueSpartan-Bold', fontWeight: 'bold' }}>Editar</Text>
                 </TouchableOpacity>
             </View>
             <View style={{ flex: 1 }}>
-                <DrawerContentScrollView {...props} scrollEnabled={false}>
+                <DrawerContentScrollView {...props} scrollEnabled={false} style={{ backgroundColor: isDarkTheme ? '#121212' : '#ffffff' }}>
                     <DrawerItemList {...props} />
                 </DrawerContentScrollView>
             </View>
@@ -55,28 +59,28 @@ function CustomDrawerContent(props) {
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#115f8c',
+                    backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c',
                     borderRadius: 50,
                     height: 55,
                     marginBottom: 30,
                     marginHorizontal: 15,
-
-                    // 💛 sombra amarela suave, só embaixo/direita
-                    shadowColor: '#f7b500',
-                    shadowOffset: { width: 3, height: 4 }, // deslocamento horizontal e vertical
-                    shadowOpacity: 0.9,
-                    shadowRadius: 0,
-                    elevation: 8, // para Android
+                    shadowColor: isDarkTheme ? '#4da6ff' : '#f7b500',
+                    shadowOffset: { width: 2, height: 2 },
+                    shadowOpacity: 0.5,
+                    shadowRadius: 3,
+                    elevation: 5,
                 }}
             >
                 <Ionicons name="exit-outline" size={22} color="#fff" style={{}} />
-                <Text style={{ margin: 16, fontSize: 16, color: '#fff', fontFamily: 'LeagueSpartan-Bold', fontWeight: 'bold' }}>Sair</Text>
+                <Text style={{ marginLeft: 10, fontSize: 18, color: '#fff', fontFamily: 'LeagueSpartan-Bold' }}>Sair</Text>
             </TouchableOpacity>
-        </View >
+        </View>
     )
 }
 
 export default function Layout() {
+    const { theme } = useUserData();
+    const isDarkTheme = theme === 'dark';
 
     const [fontsLoaded] = useFonts({
         'LeagueSpartan-Regular': require('../../assets/fonts/LeagueSpartan-Regular.ttf'),
@@ -92,8 +96,8 @@ export default function Layout() {
 
     if (!fontsLoaded) {
         return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color="#fff" />
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#121212' : '#ffffff' }}>
+                <ActivityIndicator size="large" color={isDarkTheme ? '#4da6ff' : '#115f8c'} />
             </View>
         );
     }
@@ -104,10 +108,11 @@ export default function Layout() {
             screenOptions={{
                 drawerStyle: {
                     width: '60%',
-                    borderRightColor: '#093f5d',
+                    borderRightColor: isDarkTheme ? '#4da6ff' : '#093f5d',
                     borderRightWidth: 4,
+                    backgroundColor: isDarkTheme ? '#121212' : '#ffffff',
                 },
-                drawerItemStyle: { backgroundColor: '#115f8c', marginBottom: 20 },
+                drawerItemStyle: { backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c', marginBottom: 20 },
                 drawerLabelStyle: {
                     fontFamily: 'LeagueSpartan-Bold',
                     fontSize: 18,
@@ -119,9 +124,12 @@ export default function Layout() {
                 headerTitleStyle: {
                     fontFamily: 'LeagueSpartan-Bold',
                     fontSize: 25,
-                    color: '#0f5176',
+                    color: isDarkTheme ? '#4da6ff' : '#0f5176',
                     fontWeight: 'bold',
                     textAlign: 'center',
+                },
+                headerStyle: {
+                    backgroundColor: isDarkTheme ? '#121212' : '#ffffff',
                 },
                 headerTitle: 'Transporte+',
             }}

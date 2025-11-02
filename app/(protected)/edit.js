@@ -1,25 +1,45 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import DropDownPicker from 'react-native-dropdown-picker';
+import { useUserData } from '../../contexts/UserDataContext';
 
 export default function Edit() {
   const router = useRouter();
+  const { instituicao: savedInstituicao, ponto: savedPonto, updateUserData } = useUserData();
 
   const [openInstituicao, setOpenInstituicao] = useState(false);
   const [instituicao, setInstituicao] = useState(null);
   const [itensInstituicao, setItensInstituicao] = useState([
-    { label: 'Escola A', value: 'A' },
-    { label: 'Escola B', value: 'B' },
+    { label: 'Escola A', value: 'Escola A' },
+    { label: 'Escola B', value: 'Escola B' },
+    { label: 'Escola C', value: 'Escola C' },
   ]);
 
   const [openPonto, setOpenPonto] = useState(false);
   const [ponto, setPonto] = useState(null);
   const [itensPonto, setItensPonto] = useState([
-    { label: 'Ponto 1', value: '1' },
-    { label: 'Ponto 2', value: '2' },
+    { label: 'Ponto 1', value: 'Ponto 1' },
+    { label: 'Ponto 2', value: 'Ponto 2' },
+    { label: 'Ponto 3', value: 'Ponto 3' },
   ]);
+
+  // Carregar dados salvos quando a tela for aberta
+  useEffect(() => {
+    if (savedInstituicao) setInstituicao(savedInstituicao);
+    if (savedPonto) setPonto(savedPonto);
+  }, [savedInstituicao, savedPonto]);
+
+  const handleSave = async () => {
+    try {
+      await updateUserData(instituicao, ponto);
+      Alert.alert('Sucesso', 'Dados atualizados com sucesso!');
+      router.back();
+    } catch (error) {
+      Alert.alert('Erro', 'Não foi possível salvar os dados.');
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -61,7 +81,7 @@ export default function Edit() {
           />
         </View>
 
-        <TouchableOpacity style={styles.saveButton}>
+        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>Salvar</Text>
         </TouchableOpacity>
       </View>

@@ -27,13 +27,7 @@ export default function Login() {
   const raRef = useRef(null);
   const senhaRef = useRef(null);
 
-  const baseURL = Platform.OS === 'web'
-    ? (process.env.EXPO_PUBLIC_PROXY_URL || 'http://localhost:3001')
-    : 'https://backend-mobilize-transporte.onrender.com';
-  // const mockUsers = [
-  //   { ra: "12345", senha: "123" },
-  //   { ra: "54321", senha: "321" },
-  // ];
+  const baseURL = 'https://backend-mobilize-transporte.onrender.com';
 
   const [isLoading, setLoading] = useState(false);
 

@@ -1,6 +1,8 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { UserDataProvider } from '../contexts/UserDataContext';
 
 export default function Layout() {
 
@@ -24,10 +26,17 @@ export default function Layout() {
     );
   }
 
-  return <Stack>
-    <Stack.Screen name="index" options={{ headerShown: false }} />
-    <Stack.Screen name="login" options={{ headerShown: false }} />
-    <Stack.Screen name="register" options={{ headerShown: false }} />
-    <Stack.Screen name="(protected)" options={{ headerShown: false }} />
-  </Stack>;
+  return (
+    <SafeAreaProvider>
+      <UserDataProvider>
+        <Stack>
+          <Stack.Screen name="index" options={{ headerShown: false }} />
+          <Stack.Screen name="login" options={{ headerShown: false }} />
+          <Stack.Screen name="register" options={{ headerShown: false }} />
+          <Stack.Screen name="(protected)" options={{ headerShown: false }} />
+          <Stack.Screen name='(admin)' options={{headerShown: false}} />
+        </Stack>
+      </UserDataProvider>
+    </SafeAreaProvider>
+  );
 }

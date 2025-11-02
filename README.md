@@ -8,6 +8,34 @@ O **Transporte +** é um aplicativo desenvolvido pela **Mobiize** com o objetivo
 O aplicativo integra um mapa interativo que exibe todas as escolas e pontos de ônibus. Isso permite aos gestores visualizar de maneira clara e intuitiva onde cada ponto de embarque está localizado e qual escola ele atende.
 
 ### 2. **Gestão de Pontos de Embarque**
+Facilita o gerenciamento dos pontos de embarque e desembarque, permitindo adicionar, editar e remover pontos conforme necessário.
+
+### 3. **Perfil Personalizado**
+Os usuários podem personalizar seu perfil com foto, instituição de ensino e ponto de ônibus preferido.
+
+### 4. **Tema Escuro/Claro**
+Suporte completo a tema escuro e claro em toda a aplicação, proporcionando melhor experiência visual.
+
+### 5. **Painel Administrativo**
+Interface dedicada para administradores gerenciarem anúncios e informações do sistema.
+
+## **Tecnologias Utilizadas**
+
+- React Native
+- Expo Router
+- AsyncStorage
+- Contexto para gerenciamento de estado
+- Integração com backend
+
+## **Instalação**
+
+```bash
+# Instalar dependências
+npm install
+
+# Iniciar o servidor de desenvolvimento
+npx expo start
+```
 Os gestores podem adicionar, editar e excluir pontos de embarque. Cada ponto é marcado no mapa com informações como:
 - Nome do ponto
 - Endereço
