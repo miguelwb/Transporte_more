@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import Map, { Callout, Marker } from '../../components/MapView';
+import { useTransport } from '../../contexts/TransportContext';
 
 const coordinate = {
   latitude: -21.874997619625923,
@@ -25,6 +26,7 @@ const coordinatePoints = {
 };
 
 export default function Home() {
+  const { points } = useTransport();
   const [ra, setRA] = useState(null);
   const [announcement, setAnnouncement] = useState('');
   const EXPIRATION_MS = 5 * 60 * 1000; // 5 minutos
@@ -92,24 +94,42 @@ export default function Home() {
         longitudeDelta: 0.03,
       }}
       >
-        <Marker coordinate={coordinatePoints.Eldorado}>
-          <Callout style={styles.callout} >
-            <View style={styles.calloutItens} >
-              <Image source={require('../../assets/images/icon.png')} style={styles.img} />
-              <Text style={styles.title} >{coordinatePoints.Eldorado.nome}</Text>
-              <Text style={styles.address} >{coordinatePoints.Eldorado.rua}</Text>
-            </View>
-          </Callout>
-        </Marker>
-        <Marker coordinate={coordinatePoints.Casa}>
-          <Callout style={styles.callout} >
-            <View style={styles.calloutItens} >
-              <Image source={require('../../assets/images/icon.png')} style={styles.img} />
-              <Text style={styles.title} >{coordinatePoints.Casa.nome}</Text>
-              <Text style={styles.address} >{coordinatePoints.Casa.rua}</Text>
-            </View>
-          </Callout>
-        </Marker>
+        {points && points.length > 0 ? (
+          points.map((p) => (
+            <Marker key={p.id} coordinate={{ latitude: p.latitude, longitude: p.longitude }}>
+              <Callout style={styles.callout}>
+                <View style={styles.calloutItens}>
+                  <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                  <Text style={styles.title}>{p.nome}</Text>
+                  <Text style={styles.address}>{p.endereco}</Text>
+                  <Text style={styles.address}>Alunos: {Number(p.alunosCount) || 0}</Text>
+                  <Text style={styles.address}>Coleta: {p.horarioColeta}</Text>
+                </View>
+              </Callout>
+            </Marker>
+          ))
+        ) : (
+          <>
+            <Marker coordinate={coordinatePoints.Eldorado}>
+              <Callout style={styles.callout} >
+                <View style={styles.calloutItens} >
+                  <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                  <Text style={styles.title} >{coordinatePoints.Eldorado.nome}</Text>
+                  <Text style={styles.address} >{coordinatePoints.Eldorado.rua}</Text>
+                </View>
+              </Callout>
+            </Marker>
+            <Marker coordinate={coordinatePoints.Casa}>
+              <Callout style={styles.callout} >
+                <View style={styles.calloutItens} >
+                  <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                  <Text style={styles.title} >{coordinatePoints.Casa.nome}</Text>
+                  <Text style={styles.address} >{coordinatePoints.Casa.rua}</Text>
+                </View>
+              </Callout>
+            </Marker>
+          </>
+        )}
       </Map>
       
     </View>

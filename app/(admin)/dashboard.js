@@ -185,6 +185,33 @@ export default function AdminDashboard() {
           </View>
         </View>
 
+        {/* Gestão de Transporte Escolar */}
+        <View style={styles.menuContainer}>
+          <Text style={styles.sectionTitle}>Gestão de Transporte Escolar</Text>
+          <View style={styles.grid}> 
+            <TouchableOpacity style={styles.menuCard} onPress={() => router.push('/(admin)/points')}>
+              <MaterialIcons name="place" size={28} color="#2a5298" />
+              <Text style={styles.menuCardTitle}>Pontos de Embarque</Text>
+              <Text style={styles.menuCardDesc}>Adicionar, editar e excluir pontos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuCard} onPress={() => router.push('/(admin)/routes')}>
+              <MaterialIcons name="route" size={28} color="#2a5298" />
+              <Text style={styles.menuCardTitle}>Rotas Personalizadas</Text>
+              <Text style={styles.menuCardDesc}>Criar e organizar rotas escolares</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuCard} onPress={() => router.push('/(admin)/notifications')}>
+              <MaterialIcons name="notifications" size={28} color="#2a5298" />
+              <Text style={styles.menuCardTitle}>Notificações</Text>
+              <Text style={styles.menuCardDesc}>Enviar alertas e avisos</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuCard} onPress={() => router.push('/(admin)/reports')}>
+              <MaterialIcons name="assessment" size={28} color="#2a5298" />
+              <Text style={styles.menuCardTitle}>Relatórios</Text>
+              <Text style={styles.menuCardDesc}>Ver métricas e estatísticas</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
         {/* Informações do Sistema */}
         <View style={styles.systemInfo}>
           <Text style={styles.sectionTitle}>Informações do Sistema</Text>
@@ -238,6 +265,33 @@ const styles = StyleSheet.create({
   menuContainer: {
     padding: 20,
     paddingTop: 0,
+  },
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  menuCard: {
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 12,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    width: '48%',
+  },
+  menuCardTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 6,
+  },
+  menuCardDesc: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 4,
   },
   announcementCard: {
     backgroundColor: 'white',
