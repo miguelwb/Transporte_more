@@ -49,16 +49,21 @@ export default function ManageRoutes() {
     }
     const payload = {
       nome: routeName.trim(),
-      schoolName: schoolName.trim(),
+      descricao: `Rota da ${schoolName.trim()}`,
+      busId: 1,
       pointIds: selectedPointIds,
       horarios,
     };
-    if (editingId) {
-      await updateRoute(editingId, payload);
-      Alert.alert('Atualizado', 'Rota atualizada com sucesso.');
-    } else {
-      await addRoute(payload);
-      Alert.alert('Criada', 'Rota criada com sucesso.');
+    try {
+      if (editingId) {
+        await updateRoute(editingId, payload);
+        Alert.alert('Atualizado', 'Rota atualizada com sucesso.');
+      } else {
+        await addRoute(payload);
+        Alert.alert('Criada', 'Rota criada com sucesso.');
+      }
+    } catch (e) {
+      Alert.alert('Aviso', `Falha ao integrar com o backend. A rota foi salva localmente.\n${e?.message || ''}`);
     }
     clearForm();
   };

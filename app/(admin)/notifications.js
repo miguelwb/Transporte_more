@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as Notifications from 'expo-notifications';
+import { postNotificacao } from '../../services/api';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -26,18 +27,22 @@ export default function NotificationsAdmin() {
   }, []);
 
   const sendNotification = async (title, body) => {
-    if (Platform.OS === 'web') {
-      Alert.alert(title, body);
-      return;
-    }
     try {
-      await Notifications.scheduleNotificationAsync({
-        content: { title, body },
-        trigger: { seconds: 3 },
-      });
-      Alert.alert('Notificação agendada', 'A notificação será enviada em instantes.');
+      // Publica no backend para todos os usuários
+      await postNotificacao({ titulo: title, mensagem: body, userId: 'all', lido: false });
+
+      // Fallback local: agendar push quando disponível
+      if (Platform.OS !== 'web') {
+        try {
+          await Notifications.scheduleNotificationAsync({
+            content: { title, body },
+            trigger: { seconds: 2 },
+          });
+        } catch {}
+      }
+      Alert.alert('Sucesso', 'Notificação publicada para todos os usuários.');
     } catch (e) {
-      Alert.alert('Erro', 'Falha ao agendar notificação.');
+      Alert.alert('Erro', e?.message || 'Falha ao enviar notificação.');
     }
   };
 

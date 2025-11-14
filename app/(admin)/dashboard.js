@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { postNotificacao, getNotificacoes } from '../../services/api';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -49,22 +50,24 @@ export default function AdminDashboard() {
 
   const loadAnnouncement = async () => {
     try {
-      const [msg, ts] = await AsyncStorage.multiGet(['adminMessage', 'adminMessageTime']);
-      const message = msg?.[1] || '';
-      const timestampStr = ts?.[1];
-      const now = Date.now();
-      const timestamp = timestampStr ? parseInt(timestampStr, 10) : 0;
-      // Se expirou, limpar
-      if (message && timestamp && now - timestamp > EXPIRATION_MS) {
-        await AsyncStorage.multiRemove(['adminMessage', 'adminMessageTime']);
-        setSavedAnnouncement('');
-        setAnnouncement('');
-      } else if (message) {
-        setSavedAnnouncement(message);
-        setAnnouncement(message);
-      }
+      const list = await getNotificacoes();
+      const normalized = Array.isArray(list) ? list.map((n) => ({
+        titulo: n.titulo || n.title || 'Aviso',
+        mensagem: n.mensagem || n.message || n.texto || n.body || '',
+        createdAt: n.created_at || n.createdAt || null,
+      })) : [];
+      normalized.sort((a, b) => {
+        const ta = a.createdAt ? new Date(String(a.createdAt).replace(' ', 'T')).getTime() : 0;
+        const tb = b.createdAt ? new Date(String(b.createdAt).replace(' ', 'T')).getTime() : 0;
+        return tb - ta;
+      });
+      const latest = normalized[0] || null;
+      const msg = latest ? latest.mensagem : '';
+      setSavedAnnouncement(msg);
+      setAnnouncement(msg);
     } catch (error) {
-      console.error('Erro ao carregar mensagem do admin:', error);
+      console.error('Erro ao carregar mensagem do backend:', error);
+      setSavedAnnouncement('');
     }
   };
 
@@ -75,10 +78,8 @@ export default function AdminDashboard() {
     setSaving(true);
     try {
       const trimmed = announcement.trim();
-      await AsyncStorage.multiSet([
-        ['adminMessage', trimmed],
-        ['adminMessageTime', Date.now().toString()],
-      ]);
+      // Publica como notificação para alcançar todos os usuários
+      await postNotificacao({ titulo: 'Mensagem do Admin', mensagem: trimmed, userId: 'all' });
       setSavedAnnouncement(trimmed);
       Alert.alert('Publicado', 'Mensagem publicada para os usuários.');
     } catch (error) {
@@ -128,7 +129,7 @@ export default function AdminDashboard() {
   // Removido: componente de menu.
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.header}>
@@ -240,7 +241,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#2a5298',
     padding: 20,
-    paddingTop: 10,
+    paddingTop: 0,
   },
   welcomeText: {
     color: 'white',

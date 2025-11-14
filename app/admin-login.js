@@ -80,12 +80,6 @@ export default function AdminLogin() {
             style={styles.gradient}
           >
             <View style={styles.header}>
-              <TouchableOpacity 
-                style={styles.backButton}
-                onPress={() => router.back()}
-              >
-                <Entypo name="chevron-left" size={24} color="white" />
-              </TouchableOpacity>
               <View style={styles.logoContainer}>
                 <View style={styles.logo}>
                   <FontAwesome5 name="user-shield" size={40} color="white" />

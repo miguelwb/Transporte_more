@@ -37,6 +37,7 @@ export default function Layout() {
             <Stack.Screen name="register" options={{ headerShown: false }} />
             <Stack.Screen name="(protected)" options={{ headerShown: false }} />
             <Stack.Screen name='(admin)' options={{headerShown: false}} />
+            <Stack.Screen name='admin-login' options={{headerShown: false}} />
           </Stack>
         </TransportProvider>
       </UserDataProvider>

@@ -2,6 +2,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { uploadFotoAluno } from '../../services/api';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useUserData } from '../../contexts/UserDataContext';
 
@@ -38,6 +40,32 @@ export default function Edit() {
       router.back();
     } catch (error) {
       Alert.alert('Erro', 'Não foi possível salvar os dados.');
+    }
+  };
+
+  const handleUploadFoto = async () => {
+    try {
+      // Web: utiliza input de arquivo invisível
+      if (typeof document !== 'undefined') {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          // Cria URL temporária
+          const uri = URL.createObjectURL(file);
+          const ra = await AsyncStorage.getItem('userRA');
+          if (!ra) return Alert.alert('Erro', 'RA não encontrado. Faça login novamente.');
+          await uploadFotoAluno(ra, uri, file.name, file.type || 'image/jpeg');
+          Alert.alert('Sucesso', 'Foto enviada.');
+        };
+        input.click();
+        return;
+      }
+      Alert.alert('Aviso', 'Upload de foto disponível no web nesta versão.');
+    } catch (e) {
+      Alert.alert('Erro', e?.message || 'Falha no upload da foto.');
     }
   };
 
@@ -83,6 +111,9 @@ export default function Edit() {
 
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>Salvar</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.saveButton, { marginTop: 10 }]} onPress={handleUploadFoto}>
+          <Text style={styles.saveText}>Upload Foto</Text>
         </TouchableOpacity>
       </View>
 

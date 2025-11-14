@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { Alert, FlatList, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
+import { BASE_URL } from '../../services/api';
 import { useTransport } from '../../contexts/TransportContext';
 import Map, { Marker } from '../../components/MapView';
 
@@ -54,12 +55,17 @@ export default function ManagePoints() {
       alunosCount: Number(form.alunosCount || 0),
       horarioColeta: form.horarioColeta.trim(),
     };
-    if (editingId) {
-      await updatePoint(editingId, payload);
-      Alert.alert('Atualizado', 'Ponto atualizado com sucesso.');
-    } else {
-      await addPoint(payload);
-      Alert.alert('Adicionado', 'Ponto adicionado com sucesso.');
+    try {
+      if (editingId) {
+        await updatePoint(editingId, payload);
+        Alert.alert('Atualizado', 'Ponto atualizado com sucesso.');
+      } else {
+        await addPoint(payload);
+        Alert.alert('Adicionado', 'Ponto adicionado com sucesso.');
+      }
+    } catch (e) {
+      Alert.alert('Erro', `Falha ao cadastrar ponto no backend. Nada foi salvo.\n${e?.message || ''}`);
+      return; // não limpar o formulário em caso de erro
     }
     resetForm();
   };
@@ -181,17 +187,13 @@ export default function ManagePoints() {
           <Map
             style={{ width: '100%', height: '100%' }}
             initialRegion={mapRegion}
-            {...(Platform.OS !== 'web' ? { onPress: handleMapPress } : {})}
+            onPress={handleMapPress}
           >
             {form.latitude && form.longitude ? (
               <Marker coordinate={{ latitude: Number(form.latitude), longitude: Number(form.longitude) }} />
             ) : null}
           </Map>
-          {Platform.OS === 'web' ? (
-            <Text style={styles.mapHint}>Dica: no web, selecione as coordenadas pela busca acima.</Text>
-          ) : (
-            <Text style={styles.mapHint}>Toque no mapa para definir a localização.</Text>
-          )}
+          <Text style={styles.mapHint}>Clique no mapa para definir a localização.</Text>
         </View>
         <View style={styles.row}>
           <TextInput placeholder="Latitude" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.latitude} onChangeText={(t) => setForm((f) => ({ ...f, latitude: t }))} />
@@ -216,7 +218,7 @@ export default function ManagePoints() {
       <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Pontos cadastrados</Text>
       <FlatList
         data={points}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => String(item.id)}
         renderItem={renderItem}
         ListEmptyComponent={<Text style={styles.emptyText}>Nenhum ponto cadastrado.</Text>}
       />

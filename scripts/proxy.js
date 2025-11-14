@@ -4,18 +4,21 @@
 const http = require('http');
 const { URL } = require('url');
 
-const TARGET = 'https://backend-mobilize-transporte.onrender.com';
+const TARGET = process.env.TARGET || 'https://backend-mobilize-transporte.onrender.com';
 const PORT = process.env.PROXY_PORT ? Number(process.env.PROXY_PORT) : 3001;
-const ORIGIN = process.env.ALLOW_ORIGIN || 'http://localhost:8080';
+// Ajusta a origin padrão para o Expo web (porta 8081 no nosso setup)
+const ORIGIN = process.env.ALLOW_ORIGIN || 'http://localhost:8081';
 
-function setCors(res) {
-  res.setHeader('Access-Control-Allow-Origin', ORIGIN);
+function setCors(req, res) {
+  const origin = req.headers.origin || ORIGIN || '*';
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Vary', 'Origin');
 }
 
 const server = http.createServer(async (req, res) => {
-  setCors(res);
+  setCors(req, res);
 
   if (req.method === 'OPTIONS') {
     res.writeHead(204);
@@ -44,7 +47,9 @@ const server = http.createServer(async (req, res) => {
 
       // Mirror status & content-type
       const contentType = upstream.headers.get('content-type') || 'application/json';
-      res.writeHead(upstream.status, { 'Content-Type': contentType });
+      // Preserve previously set CORS headers; only set status and content-type
+      res.statusCode = upstream.status;
+      res.setHeader('Content-Type', contentType);
       res.end(text);
     } catch (err) {
       res.writeHead(502, { 'Content-Type': 'application/json' });
