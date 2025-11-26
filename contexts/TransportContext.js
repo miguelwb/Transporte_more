@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
-import { postPonto, patchPonto, deletePonto, postRota, getPontos } from '../services/api';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { deleteEscola, deletePonto, deleteRota, getEscolas, getPontos, getRotas, patchEscola, patchPonto, patchRota, postEscola, postPonto, postRota } from '../services/api';
 
 const TransportContext = createContext(null);
 
@@ -12,29 +12,48 @@ const STORAGE_KEYS = {
 
 export function TransportProvider({ children }) {
   const [points, setPoints] = useState([]);
+  const [schools, setSchools] = useState([]);
   const [routes, setRoutes] = useState([]);
   const [routeChangeCount, setRouteChangeCount] = useState(0);
 
   useEffect(() => {
     (async () => {
       try {
-        // Carrega apenas do backend; sem cache local de pontos
+        // Carrega apenas do backend; sem cache local de pontos/escolas
         const backendPoints = await getPontos();
         if (backendPoints && Array.isArray(backendPoints)) {
           setPoints(backendPoints);
         } else {
           setPoints([]);
         }
-        // Mantém cache local apenas para rotas e contagem de alterações
-        const savedRoutes = await AsyncStorage.getItem(STORAGE_KEYS.routes);
+        const backendSchools = await getEscolas();
+        if (backendSchools && Array.isArray(backendSchools)) {
+          setSchools(backendSchools);
+        } else {
+          setSchools([]);
+        }
+        // Rotas: tenta carregar do backend; se falhar, usa cache local
+        try {
+          const backendRoutes = await getRotas();
+          if (backendRoutes && Array.isArray(backendRoutes)) {
+            setRoutes(backendRoutes);
+          } else {
+            const savedRoutes = await AsyncStorage.getItem(STORAGE_KEYS.routes);
+            if (savedRoutes) setRoutes(JSON.parse(savedRoutes));
+          }
+        } catch (e) {
+          console.warn('Erro ao carregar rotas do backend:', e?.message);
+          const savedRoutes = await AsyncStorage.getItem(STORAGE_KEYS.routes);
+          if (savedRoutes) setRoutes(JSON.parse(savedRoutes));
+        }
         const savedCount = await AsyncStorage.getItem(STORAGE_KEYS.routeChanges);
-        if (savedRoutes) setRoutes(JSON.parse(savedRoutes));
         if (savedCount) setRouteChangeCount(Number(savedCount) || 0);
       } catch (e) {
-        console.warn('Erro ao carregar pontos do backend:', e?.message);
+        console.warn('Erro ao carregar pontos/escolas do backend:', e?.message);
         // Sem fallback local: mantém lista vazia
         setPoints([]);
-        // Ainda carrega rotas/contagem localmente
+        setSchools([]);
+        // Rotas/contagem: fallback local
         const savedRoutes = await AsyncStorage.getItem(STORAGE_KEYS.routes);
         const savedCount = await AsyncStorage.getItem(STORAGE_KEYS.routeChanges);
         if (savedRoutes) setRoutes(JSON.parse(savedRoutes));
@@ -49,6 +68,15 @@ export function TransportProvider({ children }) {
       setPoints(backendPoints || []);
     } catch (e) {
       console.warn('Falha ao sincronizar pontos com backend:', e?.message);
+    }
+  };
+
+  const refetchSchools = async () => {
+    try {
+      const backendSchools = await getEscolas();
+      setSchools(backendSchools || []);
+    } catch (e) {
+      console.warn('Falha ao sincronizar escolas com backend:', e?.message);
     }
   };
 
@@ -78,6 +106,19 @@ export function TransportProvider({ children }) {
     return created;
   };
 
+  const addSchool = async (school) => {
+    const payload = {
+      nome: school.nome,
+      endereco: school.endereco,
+      latitude: school.latitude,
+      longitude: school.longitude,
+      foto: school.foto,
+    };
+    const created = await postEscola(payload);
+    await refetchSchools();
+    return created;
+  };
+
   const updatePoint = async (id, updates) => {
     try {
       await patchPonto(id, updates);
@@ -86,6 +127,15 @@ export function TransportProvider({ children }) {
     }
     // Recarrega pontos para refletir alterações imediatamente
     await refetchPoints();
+  };
+
+  const updateSchool = async (id, updates) => {
+    try {
+      await patchEscola(id, updates);
+    } catch (e) {
+      console.warn('Falha ao atualizar escola no backend:', e?.message);
+    }
+    await refetchSchools();
   };
 
   const removePoint = async (id) => {
@@ -98,12 +148,32 @@ export function TransportProvider({ children }) {
     await refetchPoints();
   };
 
+  const removeSchool = async (id) => {
+    try {
+      await deleteEscola(id);
+    } catch (e) {
+      console.warn('Falha ao remover escola no backend:', e?.message);
+    }
+    await refetchSchools();
+  };
+
   const saveRoutes = async (newRoutes) => {
     setRoutes(newRoutes);
     try {
       await AsyncStorage.setItem(STORAGE_KEYS.routes, JSON.stringify(newRoutes));
     } catch (e) {
       console.warn('Erro ao salvar rotas:', e);
+    }
+  };
+
+  const refetchRoutes = async () => {
+    try {
+      const backendRoutes = await getRotas();
+      if (backendRoutes && Array.isArray(backendRoutes)) {
+        await saveRoutes(backendRoutes);
+      }
+    } catch (e) {
+      console.warn('Falha ao sincronizar rotas com backend:', e?.message);
     }
   };
 
@@ -124,7 +194,10 @@ export function TransportProvider({ children }) {
       const payload = {
         nome: route.nome,
         descricao: route.descricao,
+        schoolName: route.schoolName,
         busId: route.busId,
+        pointIds: route.pointIds,
+        horarios: route.horarios,
       };
       const created = await postRota(payload);
       backendId = created?.id || created?._id || null;
@@ -135,18 +208,31 @@ export function TransportProvider({ children }) {
     const newRoutes = [...routes, { ...route, id }];
     await saveRoutes(newRoutes);
     await incrementRouteChange();
+    await refetchRoutes();
   };
 
   const updateRoute = async (id, updates) => {
+    try {
+      await patchRota(id, updates);
+    } catch (e) {
+      console.warn('Falha ao atualizar rota no backend:', e?.message);
+    }
     const newRoutes = routes.map((r) => (r.id === id ? { ...r, ...updates } : r));
     await saveRoutes(newRoutes);
     await incrementRouteChange();
+    await refetchRoutes();
   };
 
   const removeRoute = async (id) => {
+    try {
+      await deleteRota(id);
+    } catch (e) {
+      console.warn('Falha ao remover rota no backend:', e?.message);
+    }
     const newRoutes = routes.filter((r) => r.id !== id);
     await saveRoutes(newRoutes);
     await incrementRouteChange();
+    await refetchRoutes();
   };
 
   const totalStudentsTransported = useMemo(() => {
@@ -162,16 +248,22 @@ export function TransportProvider({ children }) {
 
   const value = {
     points,
+    schools,
     routes,
     routeChangeCount,
     addPoint,
+    addSchool,
     updatePoint,
+    updateSchool,
     removePoint,
+    removeSchool,
     addRoute,
     updateRoute,
     removeRoute,
+    refetchRoutes,
     // expõe utilitário para cenários avançados
     refetchPoints,
+    refetchSchools,
     totalStudentsTransported,
   };
 

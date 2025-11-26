@@ -5,7 +5,7 @@ import { useFonts } from 'expo-font';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { Drawer } from 'expo-router/drawer';
-import { ActivityIndicator, Text, TouchableOpacity, View, useColorScheme } from 'react-native';
+import { ActivityIndicator, Text, TouchableOpacity, View } from 'react-native';
 import { useUserData } from '../../contexts/UserDataContext';
 
 function CustomDrawerContent(props) {
@@ -19,14 +19,14 @@ function CustomDrawerContent(props) {
 
     return (
         <View style={{ flex: 1, backgroundColor: isDarkTheme ? '#121212' : '#ffffff' }}>
-            <View style={{ flex: 0.65, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c', marginBottom: 30 }}>
+            <View style={{ flex: 0.55, justifyContent: 'center', alignItems: 'center', backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c', marginBottom: 20 }}>
                 <Image
                     source={profileImage ? { uri: profileImage } : require('../../assets/images/usuario.png')}
                     style={{ width: 100, height: 100, borderRadius: 50, marginBottom: 10, borderColor: isDarkTheme ? '#115f8c' : '#093f5d', borderWidth: 3 }}
                 />
                 <Text style={{ fontSize: 18, fontWeight: 'bold', color: isDarkTheme ? '#ffffff' : '#000000ff' }}>Olá, {nome || "Usuário"}</Text>
             </View>
-            <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <View style={{ alignItems: 'center', marginBottom: 16 }}>
                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: isDarkTheme ? '#4da6ff' : '#115f8c', textAlign: 'center', marginBottom: 5, fontFamily: 'LeagueSpartan-Bold', textTransform: 'uppercase', height: 32 }}>Instituição de Ensino</Text>
                 <Text style={{ fontSize: 14, color: isDarkTheme ? '#e0e0e0' : '#000', textAlign: 'center', marginBottom: 20, fontFamily: 'LeagueSpartan-Medium' }}>{instituicao || "Não selecionada"}</Text>
                 <Text style={{ fontSize: 16, fontWeight: 'bold', color: isDarkTheme ? '#4da6ff' : '#115f8c', textAlign: 'center', marginBottom: 5, fontFamily: 'LeagueSpartan-Bold' }}>Ponto de Onibus</Text>
@@ -41,14 +41,19 @@ function CustomDrawerContent(props) {
                         borderRadius: 50,
                         height: 45,
                         width: 120,
-                        marginBottom: 30,
+                        marginBottom: 16,
                     }}
                 >
                     <Text style={{ margin: 16, fontSize: 18, color: isDarkTheme ? '#ffffff' : '#115f8c', fontFamily: 'LeagueSpartan-Bold', fontWeight: 'bold' }}>Editar</Text>
                 </TouchableOpacity>
             </View>
             <View style={{ flex: 1 }}>
-                <DrawerContentScrollView {...props} scrollEnabled={false} style={{ backgroundColor: isDarkTheme ? '#121212' : '#ffffff' }}>
+                <DrawerContentScrollView
+                    {...props}
+                    scrollEnabled={false}
+                    style={{ backgroundColor: isDarkTheme ? '#121212' : '#ffffff' }}
+                    contentContainerStyle={{ paddingBottom: 140 }}
+                >
                     <DrawerItemList {...props} />
                 </DrawerContentScrollView>
             </View>
@@ -112,7 +117,7 @@ export default function Layout() {
                     borderRightWidth: 4,
                     backgroundColor: isDarkTheme ? '#121212' : '#ffffff',
                 },
-                drawerItemStyle: { backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c', marginBottom: 20 },
+                drawerItemStyle: { backgroundColor: isDarkTheme ? '#093f5d' : '#115f8c', marginBottom: 12 },
                 drawerLabelStyle: {
                     fontFamily: 'LeagueSpartan-Bold',
                     fontSize: 18,
@@ -137,6 +142,7 @@ export default function Layout() {
             <Drawer.Screen name="home" options={{ title: 'Mapa' }} />
             <Drawer.Screen name="about" options={{ title: 'Sobre' }} />
             <Drawer.Screen name="config" options={{ title: 'Configurações' }} />
+            <Drawer.Screen name="carteirinha" options={{ title: 'Carteirinha' }} />
             <Drawer.Screen name="edit" options={{ drawerItemStyle: { display: 'none' } }} />
         </Drawer>
 

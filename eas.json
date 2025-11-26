@@ -1,0 +1,46 @@
+{
+  "cli": {
+    "version": ">= 16.28.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://backend-mobilize-transporte.onrender.com"
+      }
+    },
+    "adhoc-ios": {
+      "distribution": "internal",
+      "ios": {
+        "simulator": false
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://backend-mobilize-transporte.onrender.com"
+      }
+    },
+    "production": {
+      "autoIncrement": true
+    },
+    "production-apk": {
+      "autoIncrement": true,
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://backend-mobilize-transporte.onrender.com"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

@@ -17,6 +17,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BASE_URL } from '../services/api';
 
 const { height } = Dimensions.get('window');
 
@@ -27,7 +28,7 @@ export default function Login() {
   const raRef = useRef(null);
   const senhaRef = useRef(null);
 
-  const baseURL = 'https://backend-mobilize-transporte.onrender.com';
+  const baseURL = BASE_URL;
 
   const [isLoading, setLoading] = useState(false);
 
@@ -75,6 +76,10 @@ export default function Login() {
       }
 
       await AsyncStorage.setItem('userRA', data.aluno.ra.toString());
+      const nomeLogin = data.aluno.nomeCompleto || data.aluno.nome || data.aluno.name;
+      if (nomeLogin) {
+        await AsyncStorage.setItem('userNome', String(nomeLogin));
+      }
       if (data.token) {
         await AsyncStorage.setItem('token', data.token);
       }

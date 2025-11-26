@@ -16,6 +16,7 @@ import {
   View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { BASE_URL } from '../services/api';
 
 const { height } = Dimensions.get('window');
 
@@ -64,7 +65,7 @@ export default function Register() {
         ra: form.ra.replace(/\D/g, ""),
       };
 
-      const response = await fetch("https://backend-mobilize-transporte.onrender.com/api/alunos/adicionar", {
+      const response = await fetch(`${BASE_URL}/api/alunos/adicionar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(alunoPayload),

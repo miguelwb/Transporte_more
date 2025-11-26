@@ -2,10 +2,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { uploadFotoAluno } from '../../services/api';
 import DropDownPicker from 'react-native-dropdown-picker';
 import { useUserData } from '../../contexts/UserDataContext';
+import { getEscolas, getPontos } from '../../services/api';
 
 export default function Edit() {
   const router = useRouter();
@@ -13,24 +12,32 @@ export default function Edit() {
 
   const [openInstituicao, setOpenInstituicao] = useState(false);
   const [instituicao, setInstituicao] = useState(null);
-  const [itensInstituicao, setItensInstituicao] = useState([
-    { label: 'Escola A', value: 'Escola A' },
-    { label: 'Escola B', value: 'Escola B' },
-    { label: 'Escola C', value: 'Escola C' },
-  ]);
+  const [itensInstituicao, setItensInstituicao] = useState([]);
 
   const [openPonto, setOpenPonto] = useState(false);
   const [ponto, setPonto] = useState(null);
-  const [itensPonto, setItensPonto] = useState([
-    { label: 'Ponto 1', value: 'Ponto 1' },
-    { label: 'Ponto 2', value: 'Ponto 2' },
-    { label: 'Ponto 3', value: 'Ponto 3' },
-  ]);
+  const [itensPonto, setItensPonto] = useState([]);
 
   // Carregar dados salvos quando a tela for aberta
   useEffect(() => {
-    if (savedInstituicao) setInstituicao(savedInstituicao);
-    if (savedPonto) setPonto(savedPonto);
+    (async () => {
+      try {
+        const escolas = await getEscolas();
+        setItensInstituicao((escolas || []).map((e) => ({ label: e.nome, value: e.nome })));
+      } catch (e) {
+        console.warn('Falha ao carregar escolas:', e?.message);
+        setItensInstituicao([]);
+      }
+      try {
+        const pontos = await getPontos();
+        setItensPonto((pontos || []).map((p) => ({ label: p.nome, value: p.nome })));
+      } catch (e) {
+        console.warn('Falha ao carregar pontos:', e?.message);
+        setItensPonto([]);
+      }
+      if (savedInstituicao) setInstituicao(savedInstituicao);
+      if (savedPonto) setPonto(savedPonto);
+    })();
   }, [savedInstituicao, savedPonto]);
 
   const handleSave = async () => {
@@ -43,31 +50,7 @@ export default function Edit() {
     }
   };
 
-  const handleUploadFoto = async () => {
-    try {
-      // Web: utiliza input de arquivo invisível
-      if (typeof document !== 'undefined') {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = async () => {
-          const file = input.files?.[0];
-          if (!file) return;
-          // Cria URL temporária
-          const uri = URL.createObjectURL(file);
-          const ra = await AsyncStorage.getItem('userRA');
-          if (!ra) return Alert.alert('Erro', 'RA não encontrado. Faça login novamente.');
-          await uploadFotoAluno(ra, uri, file.name, file.type || 'image/jpeg');
-          Alert.alert('Sucesso', 'Foto enviada.');
-        };
-        input.click();
-        return;
-      }
-      Alert.alert('Aviso', 'Upload de foto disponível no web nesta versão.');
-    } catch (e) {
-      Alert.alert('Erro', e?.message || 'Falha no upload da foto.');
-    }
-  };
+  // Removido upload de foto conforme solicitado
 
   return (
     <SafeAreaView style={styles.container}>
@@ -112,9 +95,7 @@ export default function Edit() {
         <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
           <Text style={styles.saveText}>Salvar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.saveButton, { marginTop: 10 }]} onPress={handleUploadFoto}>
-          <Text style={styles.saveText}>Upload Foto</Text>
-        </TouchableOpacity>
+        {/* Botão de upload removido */}
       </View>
 
       {/* Botão voltar */}

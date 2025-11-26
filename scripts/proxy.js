@@ -7,14 +7,16 @@ const { URL } = require('url');
 const TARGET = process.env.TARGET || 'https://backend-mobilize-transporte.onrender.com';
 const PORT = process.env.PROXY_PORT ? Number(process.env.PROXY_PORT) : 3001;
 // Ajusta a origin padrão para o Expo web (porta 8081 no nosso setup)
-const ORIGIN = process.env.ALLOW_ORIGIN || 'http://localhost:8081';
+const ORIGIN = process.env.ALLOW_ORIGIN || '*';
 
 function setCors(req, res) {
-  const origin = req.headers.origin || ORIGIN || '*';
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  const originHeader = req.headers.origin;
+  // Permite qualquer origem para evitar bloqueios entre 8082/8083/localhost variantes
+  res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,PATCH,DELETE,OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  res.setHeader('Vary', 'Origin');
+  res.setHeader('Access-Control-Expose-Headers', 'Content-Type');
+  res.setHeader('Vary', originHeader ? 'Origin' : '');
 }
 
 const server = http.createServer(async (req, res) => {
@@ -33,24 +35,41 @@ const server = http.createServer(async (req, res) => {
   req.on('data', (chunk) => (body += chunk));
   req.on('end', async () => {
     try {
-      const fetchOptions = {
+      const isHttps = targetUrl.protocol === 'https:';
+      const lib = isHttps ? require('https') : require('http');
+
+      const headers = {};
+      if (req.headers['authorization']) headers['Authorization'] = req.headers['authorization'];
+      if (req.headers['accept']) headers['Accept'] = req.headers['accept'];
+      if (req.headers['content-type'] && !['GET', 'HEAD'].includes(req.method)) {
+        headers['Content-Type'] = req.headers['content-type'];
+      }
+
+      const options = {
         method: req.method,
-        headers: {
-          'Content-Type': req.headers['content-type'] || 'application/json',
-          Authorization: req.headers['authorization'] || undefined,
-        },
-        body: ['GET', 'HEAD'].includes(req.method) ? undefined : body,
+        headers,
       };
 
-      const upstream = await fetch(targetUrl, fetchOptions);
-      const text = await upstream.text();
+      const upstreamReq = lib.request(targetUrl, options, (upstreamRes) => {
+        let respBody = '';
+        upstreamRes.on('data', (chunk) => (respBody += chunk));
+        upstreamRes.on('end', () => {
+          const contentType = upstreamRes.headers['content-type'] || 'application/json';
+          res.statusCode = upstreamRes.statusCode || 200;
+          res.setHeader('Content-Type', contentType);
+          res.end(respBody);
+        });
+      });
 
-      // Mirror status & content-type
-      const contentType = upstream.headers.get('content-type') || 'application/json';
-      // Preserve previously set CORS headers; only set status and content-type
-      res.statusCode = upstream.status;
-      res.setHeader('Content-Type', contentType);
-      res.end(text);
+      upstreamReq.on('error', (err) => {
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Proxy error', error: String(err) }));
+      });
+
+      if (!['GET', 'HEAD'].includes(req.method) && body) {
+        upstreamReq.write(body);
+      }
+      upstreamReq.end();
     } catch (err) {
       res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ message: 'Proxy error', error: String(err) }));
@@ -60,5 +79,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[proxy] Listening on http://localhost:${PORT} -> ${TARGET}`);
-  console.log(`[proxy] Allow-Origin: ${ORIGIN}`);
+  console.log(`[proxy] CORS: Access-Control-Allow-Origin=*`);
 });

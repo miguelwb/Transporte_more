@@ -29,9 +29,13 @@ export default function MapView({ style, initialRegion, onPress, children }) {
 
     const lat = initialRegion?.latitude ?? 0;
     const lng = initialRegion?.longitude ?? 0;
-    const zoom = initialRegion?.latitudeDelta
-      ? Math.max(1, Math.round(14 / initialRegion.latitudeDelta))
-      : 14;
+    const zoom = (() => {
+      if (typeof initialRegion?.latitudeDelta === 'number' && initialRegion.latitudeDelta > 0) {
+        const z = Math.round(Math.log2(360 / initialRegion.latitudeDelta));
+        return Math.max(1, Math.min(19, z));
+      }
+      return 14;
+    })();
 
     let cancelled = false;
     const onReady = (L) => {
@@ -58,8 +62,9 @@ export default function MapView({ style, initialRegion, onPress, children }) {
           tileErrorCountRef.current = 0;
           tileLayerRef.current = L.tileLayer(p.url, {
             attribution: p.attribution,
-            maxZoom: 19,
+            maxZoom: 18,
             crossOrigin: true,
+            errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=='
           }).addTo(mapRef.current);
 
           tileLayerRef.current.on('tileerror', (e) => {
@@ -70,6 +75,12 @@ export default function MapView({ style, initialRegion, onPress, children }) {
               const next = (providerIndexRef.current + 1) % providers.length;
               console.warn(`[map] falha ao carregar tiles (x${count}). Alternando provedor para índice ${next}.`);
               attachTiles(next);
+              // Tenta reduzir o zoom para aliviar carga/tiles inválidos
+              try {
+                const current = mapRef.current.getZoom();
+                const target = Math.max(12, Math.min(19, current - 1));
+                mapRef.current.setZoom(target);
+              } catch {}
             } else {
               console.warn('[map] tileerror:', e?.error || e);
             }
@@ -146,9 +157,13 @@ export default function MapView({ style, initialRegion, onPress, children }) {
     if (!map) return;
     const lat = initialRegion?.latitude ?? 0;
     const lng = initialRegion?.longitude ?? 0;
-    const zoom = initialRegion?.latitudeDelta
-      ? Math.max(1, Math.round(14 / initialRegion.latitudeDelta))
-      : map.getZoom();
+    const zoom = (() => {
+      if (typeof initialRegion?.latitudeDelta === 'number' && initialRegion.latitudeDelta > 0) {
+        const z = Math.round(Math.log2(360 / initialRegion.latitudeDelta));
+        return Math.max(1, Math.min(19, z));
+      }
+      return map.getZoom();
+    })();
     map.setView([lat, lng], zoom);
   }, [initialRegion?.latitude, initialRegion?.longitude, initialRegion?.latitudeDelta]);
 

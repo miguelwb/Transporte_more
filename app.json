@@ -7,16 +7,22 @@
     "icon": "assets/images/icon.png",
     "scheme": "transporteplus",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.migueel.wb.transporteplus",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.migueel.wb.transporteplus"
     },
     "web": {
       "bundler": "metro",
@@ -36,6 +42,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "89591e1c-4c6e-4b75-a56a-735618f7f83d"
+      }
     }
   }
 }

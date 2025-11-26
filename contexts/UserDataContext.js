@@ -1,5 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAlunoPorRA } from '../services/api';
 
 const UserDataContext = createContext();
 
@@ -19,12 +20,25 @@ export const UserDataProvider = ({ children }) => {
         const savedTheme = await AsyncStorage.getItem('userTema');
         const savedImageUri = await AsyncStorage.getItem('userProfileImage');
         const savedNome = await AsyncStorage.getItem('userNome');
+        const savedRA = await AsyncStorage.getItem('userRA');
         
         if (savedInstituicao) setInstituicao(savedInstituicao);
         if (savedPonto) setPonto(savedPonto);
         if (savedTheme) setTheme(JSON.parse(savedTheme) ? 'dark' : 'light');
         if (savedImageUri) setProfileImage(savedImageUri);
         if (savedNome) setNome(savedNome);
+        // Nome direto do back-end pelo RA, quando disponível
+        if (savedRA) {
+          try {
+            const aluno = await getAlunoPorRA(savedRA);
+            if (aluno?.nomeCompleto) {
+              setNome(aluno.nomeCompleto);
+              await AsyncStorage.setItem('userNome', aluno.nomeCompleto);
+            }
+          } catch (e) {
+            console.warn('Falha ao buscar nome do usuário no backend:', e?.message);
+          }
+        }
       } catch (error) {
         console.error('Erro ao carregar dados do usuário:', error);
       }

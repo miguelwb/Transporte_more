@@ -195,6 +195,11 @@ export default function AdminDashboard() {
               <Text style={styles.menuCardTitle}>Pontos de Embarque</Text>
               <Text style={styles.menuCardDesc}>Adicionar, editar e excluir pontos</Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.menuCard} onPress={() => router.push('/(admin)/schools')}>
+              <MaterialIcons name="school" size={28} color="#2a5298" />
+              <Text style={styles.menuCardTitle}>Escolas</Text>
+              <Text style={styles.menuCardDesc}>Criar e editar escolas</Text>
+            </TouchableOpacity>
             <TouchableOpacity style={styles.menuCard} onPress={() => router.push('/(admin)/routes')}>
               <MaterialIcons name="route" size={28} color="#2a5298" />
               <Text style={styles.menuCardTitle}>Rotas Personalizadas</Text>

@@ -1,6 +1,8 @@
 import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { ActivityIndicator, View, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import BottomSheet from '../components/BottomSheet';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { UserDataProvider } from '../contexts/UserDataContext';
 import { TransportProvider } from '../contexts/TransportContext';
@@ -39,6 +41,25 @@ export default function Layout() {
             <Stack.Screen name='(admin)' options={{headerShown: false}} />
             <Stack.Screen name='admin-login' options={{headerShown: false}} />
           </Stack>
+          <BottomSheet
+            visible={true}
+            snapPoints={[76, 380, 560]}
+            initialIndex={0}
+            backdropOpacity={0}
+            closeOnBackdropPress={false}
+            closeOnDragDown={false}
+          >
+            <View style={{ backgroundColor: '#0f5f8c', marginHorizontal: -12, paddingHorizontal: 12, paddingTop: 10, paddingBottom: 12, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <TextInput
+                placeholder="Buscar"
+                placeholderTextColor="#d6e6ef"
+                style={{ flex: 1, height: 34, borderRadius: 10, backgroundColor: '#2a76a1', paddingHorizontal: 12, color: '#eaf4f9' }}
+              />
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: '#2a76a1', alignItems: 'center', justifyContent: 'center' }}>
+                <Ionicons name="person" size={20} color="#cfe0ea" />
+              </View>
+            </View>
+          </BottomSheet>
         </TransportProvider>
       </UserDataProvider>
     </SafeAreaProvider>

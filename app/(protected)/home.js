@@ -1,12 +1,12 @@
+import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
-import { getNotificacoes } from '../../services/api';
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View, TouchableOpacity, Modal, FlatList, TextInput, ScrollView } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { FlatList, Image, Modal, Platform, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import BottomSheet from '../../components/BottomSheet';
 import Map, { Callout, Marker } from '../../components/MapView';
 import { useTransport } from '../../contexts/TransportContext';
-import BottomSheet from '../../components/BottomSheet';
+import { getNotificacoes, patchNotificacaoLida } from '../../services/api';
 
 const coordinate = {
   latitude: -21.874997619625923,
@@ -29,15 +29,18 @@ const coordinatePoints = {
 };
 
 export default function Home() {
-  const { points } = useTransport();
+  const { points, schools } = useTransport();
   const [ra, setRA] = useState(null);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifModal, setShowNotifModal] = useState(false);
   const [showQuickSheet, setShowQuickSheet] = useState(true);
+  // Em alguns dispositivos Android, o MapView pode causar crash ao montar imediatamente.
+  // Atrasamos a renderização do mapa para maior estabilidade em APK standalone.
+  const [showMap, setShowMap] = useState(Platform.OS !== 'android');
   const router = useRouter();
 
-  // Busca notificações e atualiza banner/unread sem polling
+  // Busca notificações e exibe apenas não lidas
   const loadAnnouncement = async () => {
     try {
       console.log('[poll] carregando notificações...');
@@ -55,6 +58,7 @@ export default function Home() {
           id: n.id || n._id || String(Math.random()),
           titulo: n.titulo || n.title || 'Aviso',
           mensagem: n.mensagem || n.message || n.texto || n.body || '',
+          lido: n.lido ?? n.lida ?? false,
           createdAt: createdISO,
         };
       }) : [];
@@ -63,25 +67,15 @@ export default function Home() {
         const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
         return tb - ta;
       });
-      setNotifications(normalized);
-      // Inicializa last_seen no primeiro uso para não contar todo backend
-      const lastSeenRaw = await AsyncStorage.getItem('notifications_last_seen');
-      let lastSeen;
-      if (!lastSeenRaw) {
-        const latestTs = normalized[0]?.createdAt ? new Date(normalized[0].createdAt).getTime() : Date.now();
-        await AsyncStorage.setItem('notifications_last_seen', String(latestTs));
-        lastSeen = latestTs;
-        console.log('[poll] inicializando last_seen:', new Date(latestTs).toLocaleString());
-      } else {
-        lastSeen = Number(lastSeenRaw);
+      // Filtra apenas as não lidas
+      const unread = normalized.filter((n) => !n.lido);
+      setNotifications(unread);
+      setUnreadCount(unread.length);
+      if (unread.length > 0) {
+        setShowNotifModal(true);
       }
-      const count = normalized.filter((n) => {
-        const ts = n.createdAt ? new Date(n.createdAt).getTime() : 0;
-        return ts > lastSeen;
-      }).length;
-      setUnreadCount(count);
       const ts = new Date().toLocaleTimeString();
-      console.log(`[poll] atualizado ${ts} | itens: ${normalized.length} | não lidas: ${count}`);
+      console.log(`[poll] atualizado ${ts} | itens: ${normalized.length} | não lidas: ${unread.length}`);
     } catch (e) {
       console.log('[poll] falha ao carregar notificações:', e?.message || String(e));
     }
@@ -91,7 +85,7 @@ export default function Home() {
     const checkLogin = async () => {
       const savedRA = await AsyncStorage.getItem('userRA');
       if (!savedRA) {
-        router.replace('/Login');
+        router.replace('/login');
       } else {
         setRA(savedRA);
       }
@@ -104,9 +98,16 @@ export default function Home() {
     return () => clearInterval(intervalId);
   }, []);
 
+  useEffect(() => {
+    if (Platform.OS === 'android') {
+      const t = setTimeout(() => setShowMap(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, []);
+
   const handleLogout = async () => {
     await AsyncStorage.removeItem('userRA');
-    router.replace('/Login');
+    router.replace('/login');
   };
 
   if (!ra) {
@@ -130,52 +131,70 @@ export default function Home() {
 
       {/* Painel de últimas notificações removido conforme solicitado */}
 
-      <Map 
-      style={styles.map} 
-      initialRegion={{
-        latitude: coordinate.latitude,
-        longitude: coordinate.longitude,
-        latitudeDelta: 0.03,
-        longitudeDelta: 0.03,
-      }}
-      >
-        {points && points.length > 0 ? (
-          points.map((p) => (
-            <Marker key={p.id} coordinate={{ latitude: p.latitude, longitude: p.longitude }}>
-              <Callout style={styles.callout}>
-                <View style={styles.calloutItens}>
-                  <Image source={require('../../assets/images/icon.png')} style={styles.img} />
-                  <Text style={styles.title}>{p.nome}</Text>
-                  <Text style={styles.address}>{p.endereco}</Text>
-                  <Text style={styles.address}>Alunos: {Number(p.alunosCount) || 0}</Text>
-                  <Text style={styles.address}>Coleta: {p.horarioColeta}</Text>
-                </View>
-              </Callout>
-            </Marker>
-          ))
-        ) : (
-          <>
-            <Marker coordinate={coordinatePoints.Eldorado}>
-              <Callout style={styles.callout} >
-                <View style={styles.calloutItens} >
-                  <Image source={require('../../assets/images/icon.png')} style={styles.img} />
-                  <Text style={styles.title} >{coordinatePoints.Eldorado.nome}</Text>
-                  <Text style={styles.address} >{coordinatePoints.Eldorado.rua}</Text>
-                </View>
-              </Callout>
-            </Marker>
-            <Marker coordinate={coordinatePoints.Casa}>
-              <Callout style={styles.callout} >
-                <View style={styles.calloutItens} >
-                  <Image source={require('../../assets/images/icon.png')} style={styles.img} />
-                  <Text style={styles.title} >{coordinatePoints.Casa.nome}</Text>
-                  <Text style={styles.address} >{coordinatePoints.Casa.rua}</Text>
-                </View>
-              </Callout>
-            </Marker>
-          </>
-        )}
-      </Map>
+      {showMap ? (
+        <Map
+          style={styles.map}
+          initialRegion={{
+            latitude: coordinate.latitude,
+            longitude: coordinate.longitude,
+            latitudeDelta: 0.03,
+            longitudeDelta: 0.03,
+          }}
+        >
+          {Array.isArray(points) && points.length > 0 ? (
+            points.map((p) => (
+              <Marker key={p.id} coordinate={{ latitude: p.latitude, longitude: p.longitude }}>
+                <Callout style={styles.callout}>
+                  <View style={styles.calloutItens}>
+                    <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                    <Text style={styles.title}>{p.nome}</Text>
+                    <Text style={styles.address}>{p.endereco}</Text>
+                    <Text style={styles.address}>Alunos: {Number(p.alunosCount) || 0}</Text>
+                    <Text style={styles.address}>Coleta: {p.horarioColeta}</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))
+          ) : (
+            <>
+              <Marker coordinate={coordinatePoints.Eldorado}>
+                <Callout style={styles.callout}>
+                  <View style={styles.calloutItens}>
+                    <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                    <Text style={styles.title}>{coordinatePoints.Eldorado.nome}</Text>
+                    <Text style={styles.address}>{coordinatePoints.Eldorado.rua}</Text>
+                  </View>
+                </Callout>
+              </Marker>
+              <Marker coordinate={coordinatePoints.Casa}>
+                <Callout style={styles.callout}>
+                  <View style={styles.calloutItens}>
+                    <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                    <Text style={styles.title}>{coordinatePoints.Casa.nome}</Text>
+                    <Text style={styles.address}>{coordinatePoints.Casa.rua}</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            </>
+          )}
+
+          {Array.isArray(schools) && schools.length > 0 && (
+            schools.map((s) => (
+              <Marker key={`school-${s.id}`} coordinate={{ latitude: s.latitude, longitude: s.longitude }}>
+                <Callout style={styles.callout}>
+                  <View style={styles.calloutItens}>
+                    <Image source={require('../../assets/images/icon.png')} style={styles.img} />
+                    <Text style={styles.title}>Escola: {s.nome}</Text>
+                    <Text style={styles.address}>{s.endereco}</Text>
+                  </View>
+                </Callout>
+              </Marker>
+            ))
+          )}
+        </Map>
+      ) : (
+        <View style={styles.map} />
+      )}
       <Modal visible={showNotifModal} transparent animationType="slide" onRequestClose={() => setShowNotifModal(false)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalCard}>
@@ -196,10 +215,20 @@ export default function Home() {
             )}
             <View style={styles.modalActions}>
               <TouchableOpacity style={[styles.modalBtn, styles.modalPrimary]} onPress={async () => {
-                const now = Date.now();
-                await AsyncStorage.setItem('notifications_last_seen', String(now));
-                setUnreadCount(0);
-                setShowNotifModal(false);
+                try {
+                  // Marca como lidas no backend todas as notificações visíveis
+                  const ids = notifications.map((n) => n.id).filter(Boolean);
+                  if (ids.length > 0) {
+                    await Promise.allSettled(ids.map((id) => patchNotificacaoLida(id)));
+                  }
+                } catch (err) {
+                  console.log('Falha ao marcar como lidas no backend:', err?.message || String(err));
+                } finally {
+                  // Atualiza estado local para não reabrir
+                  setNotifications([]);
+                  setUnreadCount(0);
+                  setShowNotifModal(false);
+                }
               }}>
                 <Text style={styles.modalBtnText}>Marcar como vistas</Text>
               </TouchableOpacity>
@@ -235,19 +264,32 @@ export default function Home() {
         <ScrollView showsVerticalScrollIndicator={false}>
           <Text style={styles.sheetSectionTitle}>Para você</Text>
           <View style={styles.sheetGridRow}>
-            <TouchableOpacity style={styles.sheetGridItem} onPress={() => { setShowQuickSheet(false); router.push('/(admin)/dashboard'); }}>
+            <TouchableOpacity style={styles.sheetGridItem} onPress={() => { router.push('/(admin)/dashboard'); }}>
               <Ionicons name="time-outline" size={22} color="#2a5298" />
               <Text style={styles.sheetGridText}>Horários</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.sheetGridItem} onPress={() => { setShowQuickSheet(false); router.push('/(admin)/points'); }}>
+            <TouchableOpacity style={styles.sheetGridItem} onPress={() => { router.push('/(admin)/points'); }}>
               <Ionicons name="location-outline" size={22} color="#2a5298" />
               <Text style={styles.sheetGridText}>Pontos</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.sheetGridItem} onPress={() => { setShowQuickSheet(false); router.push('/(admin)/routes'); }}>
+            <TouchableOpacity style={styles.sheetGridItem} onPress={() => { router.push('/(admin)/routes'); }}>
               <Ionicons name="map-outline" size={22} color="#2a5298" />
               <Text style={styles.sheetGridText}>Rotas</Text>
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity
+            style={[styles.sheetCard, { marginTop: 4, marginBottom: 12 }]}
+            onPress={() => { router.push('/(protected)/carteirinha'); }}
+            accessibilityRole="button"
+            accessibilityLabel="Abrir carteirinha de transporte escolar"
+          >
+            <Ionicons name="id-card-outline" size={22} color="#fff" />
+            <View style={{ marginLeft: 10 }}>
+              <Text style={styles.sheetCardTitle}>Carteirinha de Transporte Escolar</Text>
+              <Text style={styles.sheetCardSub}>Clique aqui para acessar</Text>
+            </View>
+          </TouchableOpacity>
 
           <Text style={[styles.sheetSectionTitle, { marginTop: 12 }]}>Sua Rota</Text>
           {(points && points.length > 0) ? (
@@ -270,20 +312,12 @@ export default function Home() {
             </View>
           )}
 
-          <View style={styles.sheetCard}>
-            <Ionicons name="id-card-outline" size={22} color="#fff" />
-            <View style={{ marginLeft: 10 }}>
-              <Text style={styles.sheetCardTitle}>Carteirinha de Transporte Escolar</Text>
-              <Text style={styles.sheetCardSub}>clique aqui para acessar</Text>
-            </View>
-          </View>
-
-          <View style={[styles.sheetGridRow, { marginTop: 10 }]}>
-            <TouchableOpacity style={styles.sheetAction} onPress={() => { setShowQuickSheet(false); router.push('/(protected)/edit'); }}>
+          <View style={[styles.sheetGridRow, { marginTop: 16 }]}>
+            <TouchableOpacity style={styles.sheetAction} onPress={() => { router.push('/(protected)/edit'); }}>
               <Ionicons name="person-circle-outline" size={22} color="#2a5298" />
               <Text style={styles.sheetActionText}>Editar perfil</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.sheetAction, { backgroundColor: '#fdecea', borderColor: '#f5c2c2' }]} onPress={() => { setShowQuickSheet(false); handleLogout(); }}>
+            <TouchableOpacity style={[styles.sheetAction, { backgroundColor: '#fdecea', borderColor: '#f5c2c2' }]} onPress={() => { handleLogout(); }}>
               <Ionicons name="log-out-outline" size={22} color="#c62828" />
               <Text style={[styles.sheetActionText, { color: '#c62828' }]}>Sair</Text>
             </TouchableOpacity>

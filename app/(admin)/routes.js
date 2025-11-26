@@ -50,6 +50,7 @@ export default function ManageRoutes() {
     const payload = {
       nome: routeName.trim(),
       descricao: `Rota da ${schoolName.trim()}`,
+      schoolName: schoolName.trim(),
       busId: 1,
       pointIds: selectedPointIds,
       horarios,
