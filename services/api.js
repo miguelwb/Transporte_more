@@ -3,6 +3,18 @@ export const BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'https://backend
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+// Remove qualquer indicação de lat/lng de uma string de endereço
+function sanitizeAddress(str) {
+  if (typeof str !== 'string') return '';
+  let t = str.split('|')[0]; // pega parte antes do pipe, se existir
+  // remove padrões de latitude/longitude em diversas variações
+  t = t.replace(/lat(?:itude)?\s*[:=]\s*-?\d+(?:\.\d+)?/ig, '');
+  t = t.replace(/ln?g(?:itude)?\s*[:=]\s*-?\d+(?:\.\d+)?/ig, '');
+  // limpa separadores residuais e espaços extras
+  t = t.replace(/[;,|]+\s*$/g, '');
+  return t.trim();
+}
+
 function resolveBaseUrl() {
   const REMOTE = 'https://backend-mobilize-transporte.onrender.com';
   const PROXY = process.env.EXPO_PUBLIC_PROXY_URL || 'http://localhost:3001';
@@ -104,7 +116,7 @@ export async function getPontos() {
     return {
       id: id || String(p.nome || p.name || Date.now()),
       nome: p.nome || p.name || p.titulo || 'Ponto',
-      endereco: p.endereco || p.address || p.rua || (typeof p.localizacao === 'string' ? p.localizacao.split('|')[0].trim() : ''),
+      endereco: sanitizeAddress(p.endereco || p.address || p.rua || (typeof p.localizacao === 'string' ? p.localizacao : '')),
       latitude: Number.isFinite(latitude) ? latitude : 0,
       longitude: Number.isFinite(longitude) ? longitude : 0,
       alunosCount: p.alunosCount ?? p.alunos ?? p.qtdAlunos ?? 0,
@@ -271,7 +283,7 @@ export async function getEscolas() {
     return {
       id: id || String(e.nome || e.name || Date.now()),
       nome: e.nome || e.name || 'Escola',
-      endereco: e.endereco || e.address || (typeof e.localizacao === 'string' ? e.localizacao.split('|')[0].trim() : ''),
+      endereco: sanitizeAddress(e.endereco || e.address || (typeof e.localizacao === 'string' ? e.localizacao : '')),
       latitude: Number.isFinite(latitude) ? latitude : 0,
       longitude: Number.isFinite(longitude) ? longitude : 0,
       foto: e.foto || e.photo || undefined,

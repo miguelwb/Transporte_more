@@ -149,8 +149,7 @@ export default function Home() {
                     <Image source={require('../../assets/images/icon.png')} style={styles.img} />
                     <Text style={styles.title}>{p.nome}</Text>
                     <Text style={styles.address}>{p.endereco}</Text>
-                    <Text style={styles.address}>Alunos: {Number(p.alunosCount) || 0}</Text>
-                    <Text style={styles.address}>Coleta: {p.horarioColeta}</Text>
+                    {/* Campos removidos: número de alunos e horário de coleta */}
                   </View>
                 </Callout>
               </Marker>

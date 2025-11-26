@@ -1,8 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { Alert, FlatList, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native';
-import { BASE_URL } from '../../services/api';
-import { useTransport } from '../../contexts/TransportContext';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import Map, { Marker } from '../../components/MapView';
+import { useTransport } from '../../contexts/TransportContext';
 
 export default function ManagePoints() {
   const { points, addPoint, updatePoint, removePoint } = useTransport();
@@ -11,8 +10,6 @@ export default function ManagePoints() {
     endereco: '',
     latitude: '',
     longitude: '',
-    alunosCount: '',
-    horarioColeta: '',
   });
   const [editingId, setEditingId] = useState(null);
   const [mapRegion, setMapRegion] = useState({
@@ -30,13 +27,12 @@ export default function ManagePoints() {
       form.nome.trim() &&
       form.endereco.trim() &&
       form.latitude !== '' &&
-      form.longitude !== '' &&
-      form.horarioColeta.trim() !== ''
+      form.longitude !== ''
     );
   }, [form]);
 
   const resetForm = () => {
-    setForm({ nome: '', endereco: '', latitude: '', longitude: '', alunosCount: '', horarioColeta: '' });
+    setForm({ nome: '', endereco: '', latitude: '', longitude: '' });
     setEditingId(null);
     setSearchQuery('');
     setSearchResults([]);
@@ -52,8 +48,6 @@ export default function ManagePoints() {
       endereco: form.endereco.trim(),
       latitude: Number(form.latitude),
       longitude: Number(form.longitude),
-      alunosCount: Number(form.alunosCount || 0),
-      horarioColeta: form.horarioColeta.trim(),
     };
     try {
       if (editingId) {
@@ -77,8 +71,6 @@ export default function ManagePoints() {
       endereco: point.endereco || '',
       latitude: String(point.latitude ?? ''),
       longitude: String(point.longitude ?? ''),
-      alunosCount: String(point.alunosCount ?? ''),
-      horarioColeta: point.horarioColeta || '',
     });
     if (point.latitude && point.longitude) {
       setMapRegion((r) => ({ ...r, latitude: point.latitude, longitude: point.longitude }));
@@ -97,9 +89,7 @@ export default function ManagePoints() {
       <View style={{ flex: 1 }}>
         <Text style={styles.pointTitle}>{item.nome}</Text>
         <Text style={styles.pointText}>Endereço: {item.endereco}</Text>
-        <Text style={styles.pointText}>Alunos: {item.alunosCount ?? 0}</Text>
-        <Text style={styles.pointText}>Coleta: {item.horarioColeta}</Text>
-        <Text style={styles.pointText}>Lat: {item.latitude} | Lng: {item.longitude}</Text>
+        {/* Campos removidos: número de alunos, horário de coleta e lat/lng */}
       </View>
       <View style={styles.actionsRow}>
         <TouchableOpacity style={[styles.actionBtn, styles.editBtn]} onPress={() => handleEdit(item)}>
@@ -198,10 +188,6 @@ export default function ManagePoints() {
         <View style={styles.row}>
           <TextInput placeholder="Latitude" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.latitude} onChangeText={(t) => setForm((f) => ({ ...f, latitude: t }))} />
           <TextInput placeholder="Longitude" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.longitude} onChangeText={(t) => setForm((f) => ({ ...f, longitude: t }))} />
-        </View>
-        <View style={styles.row}>
-          <TextInput placeholder="Nº de alunos" placeholderTextColor="#666" keyboardType="numeric" style={[styles.input, styles.half]} value={form.alunosCount} onChangeText={(t) => setForm((f) => ({ ...f, alunosCount: t }))} />
-          <TextInput placeholder="Horário de coleta (ex: 07:30)" placeholderTextColor="#666" style={[styles.input, styles.half]} value={form.horarioColeta} onChangeText={(t) => setForm((f) => ({ ...f, horarioColeta: t }))} />
         </View>
         <View style={styles.actionsRow}>
           <TouchableOpacity style={[styles.actionBtn, styles.primaryBtn]} onPress={handleSubmit}>

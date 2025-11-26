@@ -58,7 +58,7 @@ export default function SchoolsAdmin() {
       <View style={{ flex: 1 }}>
         <Text style={styles.schoolTitle}>{item.nome}</Text>
         <Text style={styles.schoolText}>{item.endereco || 'Sem endereço'}</Text>
-        <Text style={styles.schoolText}>Lat: {item.latitude} | Lng: {item.longitude}</Text>
+        {/* Coordenadas ocultadas conforme solicitado */}
       </View>
       <View style={styles.actionsRow}>
         <TouchableOpacity style={[styles.actionBtn, styles.editBtn]} onPress={() => {
